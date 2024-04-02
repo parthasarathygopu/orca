@@ -34,7 +34,7 @@ export const ReadOnlyTable: React.FC<ReadOnlyTableProps> = ({
   extra,
   title = "",
   desc = "",
-  showPagination = true,
+  showPagination = false,
   isDragAllowed = false,
   onDragEnd = () => { },
   ...restProps

@@ -1,18 +1,17 @@
 import { PageHeader } from "core/components/page_header";
 import { useEffect, useState } from "react";
-import {  PlusIcon, PlayCircleIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, PlayCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useParams } from "react-router-dom";
-import { Button } from "@radix-ui/themes";
+import {
+  Button, Flex, IconButton,
+  Tooltip
+} from "@radix-ui/themes";
 import { ColumnField } from "core/components/table";
 import { ReadOnlyTableV2 } from "core/components/table/read";
 import { SearchableDropdown } from "core/components/dropdown/index.jsx";
 import { fetchTestCases } from "service/app/test_case";
 import { fetchSuiteItems, batchUpdate } from "service/app/test_suite";
 import "./index.css";
-
-
-
-
 
 export function TestSuitePage() {
   const { appId = "", testSuiteId = "" } = useParams();
@@ -26,14 +25,15 @@ export function TestSuitePage() {
     fetchTestCases(appId).then((cases: any) => {
       setTestCaseList(cases);
     })
-    .finally(() => {});
+      .finally(() => { });
   }
 
   const getTestSuiteDetails = () => {
-    fetchSuiteItems(appId, testSuiteId).then((cases: any) => {
-      setTestSuiteDetails(cases);
+    fetchSuiteItems(appId, testSuiteId).then((suites: any) => {
+      setTestSuiteDetails(suites);
+      setTestCases(suites.suite_execution)
     })
-    .finally(() => {});
+      .finally(() => { });
   }
 
   useEffect(() => {
@@ -47,8 +47,9 @@ export function TestSuitePage() {
     // );
   };
 
+
   const columns: Array<ColumnField> = [
-    { 
+    {
       key: "name",
       label: "Test case name",
       className: "flex-auto "
@@ -57,16 +58,44 @@ export function TestSuitePage() {
       key: "description",
       label: "Description",
       className: "flex-auto "
+    },
+    {
+      key: "action",
+      label: "Action",
+      className: "flex-initial w-48",
+      render: (_: string, record: any) => {
+        return (
+          <Flex align="center" gap="3">
+            <Tooltip content="Delete">
+              <IconButton
+                className="cursor-pointer"
+                color="red"
+                variant="soft"
+                onClick={() => {
+                  const newList = testCases.filter((data: any) => data.id !== record.id);
+                  updateTestCase(newList);
+                }}
+              >
+                <TrashIcon className="size-4" />
+              </IconButton>
+            </Tooltip>
+          </Flex>
+        );
+      }
     }
   ];
 
   const updateTestCase = (updatedList: any) => {
-    setSelectedTestCase({})
-    setTestCases(updatedList);
-    batchUpdate(appId, testSuiteId, updatedList).then((cases: any) => {
-    })
-    .finally(() => {});
-  }
+    setSelectedTestCase({});
+    const newList: [] = updatedList.map((data: Object, index: number) => {
+      return { ...data, execution_order: index + 1, type_field: "TestCase" };
+    });
+    setTestCases(newList);
+
+    batchUpdate(appId, testSuiteId, newList)
+      .then((cases: any) => { })
+      .finally(() => { });
+  };
 
   return (
     <>
@@ -90,31 +119,31 @@ export function TestSuitePage() {
         <div className="selectTestCase">
           <h1><b>Select test case</b></h1>
           <SearchableDropdown
-        options={testCaseList || []}
-        label="name"
-        id="id"
-        selectedValue={selectedTestCase}
-        handleChange={(val: any) => {
-          setSelectedTestCase(val);
-        }}
-      />
-        <Button
-          variant="soft"
-          onClick={() => {
-            selectedTestCase.id && updateTestCase([...testCases, selectedTestCase]);
-          }}
-        >
-          <PlusIcon width="16" height="16" />
-          Add 
-        </Button>
+            options={testCaseList || []}
+            label="name"
+            id="id"
+            selectedValue={selectedTestCase}
+            handleChange={(val: any) => {
+              setSelectedTestCase(val);
+            }}
+          />
+          <Button
+            variant="soft"
+            onClick={() => {
+              selectedTestCase.id && updateTestCase([...testCases, selectedTestCase]);
+            }}
+          >
+            <PlusIcon width="16" height="16" />
+            Add
+          </Button>
         </div>
-      <ReadOnlyTableV2
-        column={columns}
-        data={testCases}
-        showPagination={false}
-        onDragEnd={(data: any) => updateTestCase(data)}
-        isDragAllowed={true}
-      />
+        <ReadOnlyTableV2
+          column={columns}
+          data={testCases}
+          showPagination={false}
+          onDragEnd={(data: any) => updateTestCase(data)}
+          isDragAllowed={true}
+        />
       </div>
     </>
   );
