@@ -9,8 +9,5 @@
 .indexCell {
     display: flex;
     align-items: center;
-}
-
-.cell{
-    min-height: 41px;
+    gap: 10px;
 }

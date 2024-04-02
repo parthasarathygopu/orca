@@ -1,7 +1,7 @@
 import { NotFound } from "assert/svg";
-import {  ReadOnlyTableProps } from ".";
+import { ReadOnlyTableProps } from ".";
 import { Text } from "@radix-ui/themes";
-import {  Bars3Icon } from "@heroicons/react/24/outline";
+import { Bars3Icon } from "@heroicons/react/24/outline";
 import React, { useMemo } from "react";
 import {
   closestCenter,
@@ -53,10 +53,10 @@ export const ReadOnlyTable: React.FC<ReadOnlyTableProps> = ({
   function handleDragEnd(event: any) {
     const { active, over } = event;
     if (active.id !== over.id) {
-        const oldIndex = items.indexOf(active.id);
-        const newIndex = items.indexOf(over.id);
+      const oldIndex = items.indexOf(active.id);
+      const newIndex = items.indexOf(over.id);
 
-      const newData=  arrayMove(data, oldIndex, newIndex);
+      const newData = arrayMove(data, oldIndex, newIndex);
       onDragEnd(newData)
     }
   }
@@ -108,7 +108,7 @@ export const ReadOnlyTable: React.FC<ReadOnlyTableProps> = ({
                       : "p-2 border-b border-blue-gray-50";
                     let id = rowItem["id"];
                     return (
-                      <DraggableTableRow key={id} rowItem={rowItem} id={id} classes={classes} column={column} isDragAllowed={isDragAllowed}/>
+                      <DraggableTableRow key={id} rowItem={rowItem} id={id} classes={classes} column={column} isDragAllowed={isDragAllowed} />
                     );
                   })
                 ) : (
@@ -185,17 +185,17 @@ export const DraggableTableRow = ({ rowItem, id, classes, column, isDragAllowed 
         column.map((cell: any, i: number) => {
           if (i === 0 && isDragAllowed) {
             return (
-              <td className="tableCell" key={i}>
+              <td  key={`${id}-${i}`} className={`tableCell ${classes} ${cell.className}`}>
                 <div className="indexCell">
-                <span className=""{...attributes} {...listeners} ><Bars3Icon width="16" height="16"/> </span>
-                {cellRender({ rowItem, id, classes, cell, index:i })}
+                  <span className=""{...attributes} {...listeners} ><Bars3Icon width="16" height="16" /> </span>
+                  {cellRender({ rowItem, cell, index: i })}
                 </div>
               </td>
             );
           }
           return (
-            <td className="tableCell" key={i}>
-              {cellRender({ rowItem, id, classes, cell, index:i })}
+            <td  key={`${id}-${i}`} className={`tableCell ${classes} ${cell.className}`}>
+              {cellRender({ rowItem, cell, index: i })}
             </td>
           );
         })
@@ -204,16 +204,13 @@ export const DraggableTableRow = ({ rowItem, id, classes, column, isDragAllowed 
   );
 };
 
-const cellRender = ({ rowItem, id, classes, cell, index }: { rowItem: any, id: any, classes: any, cell: any; index: any}) => {
+const cellRender = ({ rowItem, cell, index }: { rowItem: any, cell: any; index: any }) => {
   let childRender = rowItem[cell.key];
   if (cell.render) {
     childRender = cell.render(childRender, rowItem, index);
   }
   return (
-    <div
-      key={`${id}-${index}`}
-      className={`${classes} ${cell.className} cell`}
-    >
+    <div>
       {childRender}
     </div>
   );
