@@ -20,6 +20,9 @@ interface ReadOnlyTableProps {
   desc?: string;
   onCreate?: () => {};
   extra?: Array<React.ReactNode>;
+  showPagination ?: boolean;
+  isDragAllowed?: boolean;
+  onDragEnd?: (data: any) => void;
 }
 
 export { ReadOnlyTable, ReadOnlyTableV2 };

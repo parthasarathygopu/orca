@@ -1,6 +1,30 @@
 import { NotFound } from "assert/svg";
-import { ColumnField, ReadOnlyTableProps } from ".";
+import {  ReadOnlyTableProps } from ".";
 import { Text } from "@radix-ui/themes";
+import {  Bars3Icon } from "@heroicons/react/24/outline";
+import React, { useMemo } from "react";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors
+} from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  useSortable,
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import "./index.css";
+
+
+
+
 
 export const ReadOnlyTable: React.FC<ReadOnlyTableProps> = ({
   column,
@@ -10,10 +34,40 @@ export const ReadOnlyTable: React.FC<ReadOnlyTableProps> = ({
   extra,
   title = "",
   desc = "",
+  showPagination = true,
+  isDragAllowed = false,
+  onDragEnd = () => { },
   ...restProps
+
 }) => {
+
+  const items = useMemo(() => data?.map(({ id }) => id), [data]);
+
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, {}),
+    useSensor(TouchSensor, {}),
+    useSensor(KeyboardSensor, {})
+  );
+
+  function handleDragEnd(event: any) {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+
+      const newData=  arrayMove(data, oldIndex, newIndex);
+      onDragEnd(newData)
+    }
+  }
+
   return (
-    <>
+    <DndContext
+      sensors={sensors}
+      onDragEnd={handleDragEnd}
+      collisionDetection={closestCenter}
+      modifiers={[restrictToVerticalAxis]}
+    >
       <div className="relative flex flex-col w-full h-full text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
         <div className="relative mx-4 mt-4 overflow-hidden text-gray-700 bg-white rounded-none bg-clip-border">
           <div className="flex items-center justify-between gap-8">
@@ -45,60 +99,47 @@ export const ReadOnlyTable: React.FC<ReadOnlyTableProps> = ({
               </tr>
             </thead>
             <tbody>
-              {data.length > 0 ? (
-                data.map((rowItem: any, index: number) => {
-                  const isLast = index === rowItem.length - 1;
-                  const classes = isLast
-                    ? "p-2"
-                    : "p-2 border-b border-blue-gray-50";
-                  let id = rowItem["id"];
-                  return (
-                    <tr key={id}>
-                      {column.map((colItem: ColumnField, index: number) => {
-                        let childRender = rowItem[colItem.key];
-                        if (colItem.render) {
-                          childRender = colItem.render(childRender, rowItem);
-                        }
-                        return (
-                          <td
-                            key={`${id}-${index}`}
-                            className={`${classes} ${colItem.className}`}
-                          >
-                            {childRender}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td
-                    key="nodata"
-                    colSpan={column.length}
-                    className="p-0 border-b border-blue-gray-50"
-                  >
-                    <div className="max-w-4xl mx-auto px-4 py-0 text-center">
-                      <div className="flex justify-center items-center mx-auto mb-8">
-                        <NotFound width={150} height={150} />
+              <SortableContext items={items} strategy={verticalListSortingStrategy}>
+                {data.length > 0 ? (
+                  data.map((rowItem: any, index: number) => {
+                    const isLast = index === rowItem.length - 1;
+                    const classes = isLast
+                      ? "p-2"
+                      : "p-2 border-b border-blue-gray-50";
+                    let id = rowItem["id"];
+                    return (
+                      <DraggableTableRow key={id} rowItem={rowItem} id={id} classes={classes} column={column} isDragAllowed={isDragAllowed}/>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td
+                      key="nodata"
+                      colSpan={column.length}
+                      className="p-0 border-b border-blue-gray-50"
+                    >
+                      <div className="max-w-4xl mx-auto px-4 py-0 text-center">
+                        <div className="flex justify-center items-center mx-auto mb-8">
+                          <NotFound width={150} height={150} />
+                        </div>
+
+                        <h2 className="text-xl font-bold mb-4">
+                          No Data Not Found
+                        </h2>
+
+                        <p className="text-gray-700 mb-4">
+                          We couldn't find any data for your request. Please try
+                          again later or contact support for assistance.
+                        </p>
                       </div>
-
-                      <h2 className="text-xl font-bold mb-4">
-                        No Data Not Found
-                      </h2>
-
-                      <p className="text-gray-700 mb-4">
-                        We couldn't find any data for your request. Please try
-                        again later or contact support for assistance.
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              )}
+                    </td>
+                  </tr>
+                )}
+              </SortableContext>
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between p-4 border-t border-blue-gray-50">
+        {showPagination && <div className="flex items-center justify-between p-4 border-t border-blue-gray-50">
           <p className="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900">
             Page 1 of 10
           </p>
@@ -116,8 +157,65 @@ export const ReadOnlyTable: React.FC<ReadOnlyTableProps> = ({
               Next
             </button>
           </div>
-        </div>
+        </div>}
       </div>
-    </>
+    </DndContext>
   );
 };
+export const DraggableTableRow = ({ rowItem, id, classes, column, isDragAllowed }: { rowItem: any, id: any, classes: any, column: any, isDragAllowed: boolean }) => {
+  const {
+    attributes,
+    listeners,
+    transform,
+    transition,
+    setNodeRef,
+    isDragging
+  } = useSortable({
+    id: rowItem.id
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition
+  };
+  return (
+    <tr ref={setNodeRef} style={style}>
+      {isDragging ? (
+        <td className="dragging" colSpan={column.length}>&nbsp;</td>
+      ) : (
+        column.map((cell: any, i: number) => {
+          if (i === 0 && isDragAllowed) {
+            return (
+              <td className="tableCell" key={i}>
+                <div className="indexCell">
+                <span className=""{...attributes} {...listeners} ><Bars3Icon width="16" height="16"/> </span>
+                {cellRender({ rowItem, id, classes, cell, index:i })}
+                </div>
+              </td>
+            );
+          }
+          return (
+            <td className="tableCell" key={i}>
+              {cellRender({ rowItem, id, classes, cell, index:i })}
+            </td>
+          );
+        })
+      )}
+    </tr>
+  );
+};
+
+const cellRender = ({ rowItem, id, classes, cell, index }: { rowItem: any, id: any, classes: any, cell: any; index: any}) => {
+  let childRender = rowItem[cell.key];
+  if (cell.render) {
+    childRender = cell.render(childRender, rowItem, index);
+  }
+  return (
+    <div
+      key={`${id}-${index}`}
+      className={`${classes} ${cell.className} cell`}
+    >
+      {childRender}
+    </div>
+  );
+}
+

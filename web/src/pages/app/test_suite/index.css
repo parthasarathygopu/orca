@@ -1,0 +1,7 @@
+.selectTestCase{
+    display: grid;
+    grid-gap: 30px;
+    align-items: center;
+    grid-template-columns: max-content 30rem max-content;
+    margin: 30px;
+}
