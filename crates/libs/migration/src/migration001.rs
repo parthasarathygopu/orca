@@ -449,7 +449,7 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .from(suite_block::Entity, suite_block::Column::SuiteId)
-                            .to(case::Entity, case::Column::Id)
+                            .to(suite::Entity, suite::Column::Id)
                             .on_delete(ForeignKeyAction::Cascade)
                             .on_update(ForeignKeyAction::Cascade),
                     )

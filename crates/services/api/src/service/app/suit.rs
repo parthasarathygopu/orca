@@ -52,11 +52,15 @@ impl SuitService {
         let suit_blocks: Vec<ActiveModel> = body
             .into_iter()
             .map(|mut block| {
-                block.suite_id = suite_id.clone();
-                block.into_active_model()
+
+            if block.id.is_nil() {
+                block.id = Uuid::new_v4();
+            }
+            block.suite_id = suite_id.clone();
+            block.into_active_model()
             })
             .collect();
-        let _blocks = BlockEntity::insert_many(suit_blocks)
+            let _blocks = BlockEntity::insert_many(suit_blocks)
             .exec(self.trx())
             .await?;
         Ok(())
@@ -77,7 +81,21 @@ impl SuitService {
             .order_by_asc(BlockColumn::ExecutionOrder)
             .all(self.trx())
             .await?;
-        suite.suite_execution = Some(serde_json::to_value(suite_blocks)?);
+        let mut result = vec![];
+        for mut item in suite_blocks {
+            if item.reference.is_some() {
+                let _ref = Entity::find_by_id(item.reference.unwrap())
+                    .one(self.trx())
+                    .await?;
+                if _ref.is_some() {
+                    let r= _ref.clone().unwrap();
+                    item.name = Some(r.clone().name.clone());
+                    item.description = r.description;
+                }
+            }
+            result.push(item);
+        }
+        suite.suite_execution = Some(serde_json::to_value(result)?);
         Ok(suite)
     }
 

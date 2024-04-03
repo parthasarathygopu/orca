@@ -62,8 +62,8 @@ export const deleteSuite = async (
 interface BatchItem {
   id?: string,  //this need to be UUID
   execution_order: number,
-  type: string, //"TestCase"
-  reference: string, //UUid
+  type_field: string, //"TestCase"
+  reference: string, //use Test case id
   suite_id: string,
 }
 

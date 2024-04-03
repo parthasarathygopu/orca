@@ -7,7 +7,8 @@ import {
   RectangleGroupIcon,
   TableCellsIcon
 } from "@heroicons/react/24/outline";
-import { Outlet, useNavigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Outlet, useNavigate, useParams, useMatch } from "react-router-dom";
 import { orcaStore } from "stores/route.store";
 
 const menuItems = [
@@ -65,14 +66,19 @@ export function AppLayout() {
   const navigate = useNavigate();
 
   const { appId } = useParams();
-  // const match = useMatch({ path: "/app/:appId/*" });
-  // const selectedRoute = match?.params["*"]?.split("/")[0] || "dashboard";
+  const match = useMatch({ path: "/app/:appId/*" });
+  
   const setActiveMenu = orcaStore((state: any) => state.setAppActiveMenu);
   const activeMenu = orcaStore((state: any) => state.appActiveMenu);
   const handleClick = (menu: string) => {
     setActiveMenu(menu);
     navigate(`${appId}/${menu}`);
   };
+
+  useEffect(() => {
+  const selectedRoute = match?.params["*"]?.split("/")[0] || "dashboard";
+    setActiveMenu(selectedRoute);
+  }, []);
 
   return (
     <>

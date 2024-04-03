@@ -35,6 +35,7 @@ pub enum SuiteBlockType {
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Deserialize, Serialize)]
 #[sea_orm(table_name = "suite_block")]
 pub struct Model {
+    #[serde(skip_deserializing)]
     #[sea_orm(primary_key)]
     pub id: Uuid,
     #[serde(skip_deserializing)]
@@ -42,6 +43,13 @@ pub struct Model {
     #[sea_orm(column_name = "type")]
     pub type_field: SuiteBlockType,
     pub reference: Option<Uuid>,
+
+
+    #[serde(skip_deserializing)]
+    pub name: Option<String>,
+    #[serde(skip_deserializing)]
+    pub description: Option<String>,
+
 
     #[serde(skip_deserializing)]
     pub suite_id: Uuid,

@@ -87,8 +87,8 @@ export function TestSuitePage() {
 
   const updateTestCase = (updatedList: any) => {
     setSelectedTestCase({});
-    const newList: [] = updatedList.map((data: Object, index: number) => {
-      return { ...data, execution_order: index + 1, type_field: "TestCase" };
+    const newList: [] = updatedList.map((data: any, index: number) => {
+      return { reference: data.id,  execution_order: index + 1, type_field: "TestCase", suite_id: testSuiteId };
     });
     setTestCases(newList);
 
