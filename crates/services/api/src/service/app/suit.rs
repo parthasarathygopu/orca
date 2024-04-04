@@ -158,7 +158,18 @@ impl SuitService {
         body.execution_order = _index;
         let _suite = body.clone().into_active_model();
         info!("{:?}", _suite);
-        let result = _suite.insert(self.trx()).await?;
+        let mut result = _suite.insert(self.trx()).await?;
+        if result.reference.is_some() {
+            let _ref = CaseEntity::find_by_id(result.reference.unwrap())
+                .one(self.trx())
+                .await?;
+            if _ref.is_some() {
+                let r = _ref.clone().unwrap();
+                info!("{:#?}", r);
+                result.name = Some(r.clone().name.clone());
+                result.description = r.description;
+            }
+        }
         Ok(result)
     }
 
