@@ -109,6 +109,27 @@ export const insertSuiteBlock = async (
     return suiteItem;
 };
 
+// reorderSuiteBlock - to reorder the block in the suite with new location
+export const reorderSuiteBlock = async (
+    appId: string,
+    suiteId: string,
+    blockId: string,
+    payload: { location: number }
+) => {
+    return Service.post(
+        `${Endpoint.v1.suite.reorderSuiteBlock(appId, suiteId, blockId)}`, {
+            body: payload
+        }
+    )
+        .then((suiteItem) => {
+            return suiteItem;
+        })
+        .catch((error) => {
+            console.error("fetch Actions failed with some reason =", error);
+            return [];
+        });
+};
+
 
 // deleteSuite - will delete block to the application
 export const deleteSuiteBlock = async (

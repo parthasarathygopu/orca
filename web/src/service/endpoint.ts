@@ -31,6 +31,8 @@ export const Endpoint = {
                 `/api/v1/app/${appId}/suite/${suiteId}/block`,
             deleteSuiteBlock: (appId: string, suiteId: string, blockId: string) =>
                 `/api/v1/app/${appId}/suite/${suiteId}/block/${blockId}`,
+            reorderSuiteBlock: (appId: string, suiteId: string, blockId: string) =>
+                `/api/v1/app/${appId}/suite/${suiteId}/block/${blockId}/reorder`,
             itemCreate: (appId: string, suiteId: string) =>
                 `/api/v1/app/${appId}/suite/${suiteId}/detail`
         },

@@ -7,7 +7,13 @@ import {ColumnField} from "core/components/table";
 import {ReadOnlyTableV2} from "core/components/table/read";
 import {SearchableDropdown} from "core/components/dropdown/index.jsx";
 import {fetchTestCases} from "service/app/test_case";
-import {batchUpdate, deleteSuiteBlock, fetchSuiteItems, insertSuiteBlock} from "service/app/test_suite";
+import {
+    batchUpdate,
+    deleteSuiteBlock,
+    fetchSuiteItems,
+    insertSuiteBlock,
+    reorderSuiteBlock
+} from "service/app/test_suite";
 import "./index.css";
 
 export function TestSuitePage() {
@@ -24,6 +30,13 @@ export function TestSuitePage() {
         })
             .finally(() => {
             });
+    }
+
+
+    const reorderBlock = (blockId: string, index: number) => {
+        reorderSuiteBlock(appId, testSuiteId, blockId, {location: index}).then(() => {
+            getTestSuiteDetails();
+        });
     }
 
     const addBlock = (testCaseObj: any) => {
