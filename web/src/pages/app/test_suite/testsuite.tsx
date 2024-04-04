@@ -45,7 +45,6 @@ export function TestSuitePage() {
             type_field: "TestCase", suite_id: testSuiteId
         };
         insertSuiteBlock(appId, testSuiteId, payload).then((item) => {
-            console.log("item", item);
             setTestCaseList([...testCaseList, item]);
             getTestSuiteDetails();
             setSelectedTestCase({});
