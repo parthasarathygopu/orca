@@ -11,7 +11,7 @@ import {
   Tooltip
 } from "@radix-ui/themes";
 import { ColumnField } from "core/components/table";
-import { ReadOnlyTableV2 } from "core/components/table/read";
+import { ReadOnlyTable } from "core/components/table/read";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Service } from "service";
@@ -173,7 +173,7 @@ export const TestSuiteDashboard: React.FC = () => {
   };
 
   return (
-    <ReadOnlyTableV2
+    <ReadOnlyTable
       title="Test Suite"
       column={columns}
       data={dataSource}

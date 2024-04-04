@@ -14,13 +14,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "components/ui/tabs";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Service } from "service";
-import { fetchActions, saveBatch } from "service/app";
+import { fetchActions, saveBatch } from "service/app/action_group";
 import { Endpoint } from "service/endpoint";
 import { v4 as uuidv4 } from "uuid";
 
 export const ActionGroup: React.FC = () => {
   const [dataSource, setDataSource] = useState([] as any);
-  // const [savedData, setSavedData] = useState({ data_kind: "Static" } as object);
   const { appId = "", actionGroupId = "" } = useParams();
 
   const addNewRow = async () => {

@@ -1,7 +1,6 @@
 // prettier-ignore
 import React from 'react';
 import ReactDOM from "react-dom/client";
-// import { Analytics } from "@vercel/analytics/react";
 import App from "./App";
 import "./index.css";
 
@@ -14,14 +13,6 @@ const root = ReactDOM.createRoot(
 );
 root.render(
     <Theme accentColor="blue" appearance="light" radius="medium">
-      {/* <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-      <Theme
-        accentColor="crimson"
-        grayColor="sand"
-        radius="large"
-        scaling="95%"
-      > */}
-      {/* <ThemePanel /> */}
       <App />
     </Theme>
 );

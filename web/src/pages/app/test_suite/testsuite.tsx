@@ -7,7 +7,7 @@ import {
   Tooltip
 } from "@radix-ui/themes";
 import { ColumnField } from "core/components/table";
-import { ReadOnlyTableV2 } from "core/components/table/read";
+import { ReadOnlyTable } from "core/components/table/read";
 import { SearchableDropdown } from "core/components/dropdown/index.jsx";
 import { fetchTestCases } from "service/app/test_case";
 import { fetchSuiteItems, batchUpdate } from "service/app/test_suite";
@@ -137,7 +137,7 @@ export function TestSuitePage() {
             Add
           </Button>
         </div>
-        <ReadOnlyTableV2
+        <ReadOnlyTable
           column={columns}
           data={testCases}
           showPagination={false}

@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 import { Outlet, useNavigate, useParams, useMatch } from "react-router-dom";
-import { orcaStore } from "stores/route.store";
+import { routeStore } from "stores/route.store.js";
 
 const menuItems = [
   {
@@ -68,8 +68,8 @@ export function AppLayout() {
   const { appId } = useParams();
   const match = useMatch({ path: "/app/:appId/*" });
   
-  const setActiveMenu = orcaStore((state: any) => state.setAppActiveMenu);
-  const activeMenu = orcaStore((state: any) => state.appActiveMenu);
+  const setActiveMenu = routeStore((state: any) => state.setAppActiveMenu);
+  const activeMenu = routeStore((state: any) => state.appActiveMenu);
   const handleClick = (menu: string) => {
     setActiveMenu(menu);
     navigate(`${appId}/${menu}`);

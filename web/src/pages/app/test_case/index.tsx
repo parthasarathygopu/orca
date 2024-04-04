@@ -11,7 +11,7 @@ import {
   Tooltip
 } from "@radix-ui/themes";
 import { ColumnField } from "core/components/table";
-import { ReadOnlyTableV2 } from "core/components/table/read";
+import { ReadOnlyTable } from "core/components/table/read";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Service } from "service";
@@ -22,16 +22,14 @@ export const TestCaseDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [dataSource, setDataSource] = useState([] as any);
   const [testcase, setTestcase] = useState({} as any);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const extra: Array<React.ReactNode> = [
-    <Popover.Root>
+    <Popover.Root key="index">
       <Popover.Trigger>
         <Button
           variant="soft"
           onClick={() => {
             setTestcase({});
-            setIsCreateModalOpen(true);
           }}
         >
           <PlusIcon width="16" height="16" />
@@ -174,7 +172,7 @@ export const TestCaseDashboard: React.FC = () => {
   };
 
   return (
-    <ReadOnlyTableV2
+    <ReadOnlyTable
       title="Test Case"
       column={columns}
       data={dataSource}
