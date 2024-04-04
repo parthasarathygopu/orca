@@ -43,7 +43,7 @@ interface ReadOnlyTableProps {
   extra?: Array<React.ReactNode>;
   showPagination ?: boolean;
   isDragAllowed?: boolean;
-  onDragEnd?: (data: any) => void;
+  onDragEnd?: (data: any, newIndex: number) => void;
 }
 
 
@@ -78,7 +78,7 @@ interface ReadOnlyTableProps {
       const newIndex = items.indexOf(over.id);
 
       const newData = arrayMove(data, oldIndex, newIndex);
-      onDragEnd(newData)
+      onDragEnd(newData, newIndex)
     }
   }
 

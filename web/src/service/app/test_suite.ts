@@ -22,12 +22,12 @@ export const fetchTestSuite = async (
 // createNewSuit - Will create new Test case to the application
 export const createNewSuit = async (
     appId: string,
-    name: string,
-    desc: string,
+    payload: any
+    
 ) => {
     let _suite = Service.post(
         `${Endpoint.v1.suite.create(appId)}`, {
-            body: {name, description: desc}
+            body: payload
         }
     )
         .then((suite) => {
