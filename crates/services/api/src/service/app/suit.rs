@@ -1,11 +1,10 @@
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseTransaction, EntityTrait, IntoActiveModel, QueryFilter,
-    QueryOrder, QuerySelect,
-};
-use sea_query::{Condition, Expr};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseTransaction, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, QueryOrder, QuerySelect};
+use sea_orm_migration::SchemaManager;
+use sea_query::{Alias, Condition, Expr, Table};
 use tracing::info;
 use uuid::Uuid;
 
+use entity::test::ui::case::case::{Column as CaseColumn, Entity as CaseEntity, Model as CaseModel};
 use entity::test::ui::suit::suite::{Column, Entity, Model};
 use entity::test::ui::suit::suite_block::{
     ActiveModel, Column as BlockColumn, Entity as BlockEntity, Model as BlockModel,
@@ -43,6 +42,20 @@ impl SuitService {
         return Ok(result);
     }
 
+    /// delete - this will delete Suite in Application in Orca
+    pub async fn delete(&self, suite_id: Uuid) -> InternalResult<()> {
+        let suite = Entity::find_by_id(suite_id).one(self.trx()).await?;
+        if suite.is_none() {
+            return Err(OrcaRepoError::ModelNotFound(
+                "Suite".to_string(),
+                suite_id.to_string(),
+            ))?;
+        }
+        let suite = suite.unwrap();
+        suite.delete(self.trx()).await?;
+        Ok(())
+    }
+
     /// batch_update_suite_block - update suite Block
     pub(crate) async fn batch_update_suite_block(
         &self,
@@ -52,15 +65,14 @@ impl SuitService {
         let suit_blocks: Vec<ActiveModel> = body
             .into_iter()
             .map(|mut block| {
-
-            if block.id.is_nil() {
-                block.id = Uuid::new_v4();
-            }
-            block.suite_id = suite_id.clone();
-            block.into_active_model()
+                if block.id.is_nil() {
+                    block.id = Uuid::new_v4();
+                }
+                block.suite_id = suite_id.clone();
+                block.into_active_model()
             })
             .collect();
-            let _blocks = BlockEntity::insert_many(suit_blocks)
+        let _blocks = BlockEntity::insert_many(suit_blocks)
             .exec(self.trx())
             .await?;
         Ok(())
@@ -84,11 +96,12 @@ impl SuitService {
         let mut result = vec![];
         for mut item in suite_blocks {
             if item.reference.is_some() {
-                let _ref = Entity::find_by_id(item.reference.unwrap())
+                let _ref = CaseEntity::find_by_id(item.reference.unwrap())
                     .one(self.trx())
                     .await?;
                 if _ref.is_some() {
-                    let r= _ref.clone().unwrap();
+                    let r = _ref.clone().unwrap();
+                    info!("{:#?}", r);
                     item.name = Some(r.clone().name.clone());
                     item.description = r.description;
                 }
@@ -144,5 +157,14 @@ impl SuitService {
         info!("{:?}", _suite);
         let result = _suite.insert(self.trx()).await?;
         Ok(result)
+    }
+
+    /// delete_block - This will delete Block in the Suite
+    pub(crate) async fn delete_block(
+        &self,
+        block_id: Uuid,
+    ) -> InternalResult<()> {
+        BlockEntity::delete_by_id(block_id).exec(self.trx()).await?;
+        return Ok(());
     }
 }
