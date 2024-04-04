@@ -33,11 +33,11 @@ const menuItems = [
     label: "Test Case",
     icon: FunnelIcon
   },
-  {
-    key: "datatable",
-    label: "Data table",
-    icon: TableCellsIcon
-  },
+  // {
+  //   key: "datatable",
+  //   label: "Data table",
+  //   icon: TableCellsIcon
+  // },
   {
     key: "history",
     label: "Execution log",

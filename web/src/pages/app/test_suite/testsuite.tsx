@@ -8,7 +8,6 @@ import { ReadOnlyTable } from "core/components/table/read";
 import { SearchableDropdown } from "core/components/dropdown/index.jsx";
 import { fetchTestCases } from "service/app/test_case";
 import {
-  batchUpdate,
   deleteSuiteBlock,
   fetchSuiteItems,
   insertSuiteBlock,
@@ -61,9 +60,19 @@ export function TestSuitePage() {
   const reorderTestCase = (updatedList: any, newIndex: number) => {
     setTestCases(updatedList);
     const blockId = updatedList[newIndex].id;
-    reorderSuiteBlock(appId, testSuiteId, blockId, { location: newIndex }).then(() => {
+    // index will be 0, but execution order will be start from 1
+    reorderSuiteBlock(appId, testSuiteId, blockId, { location: newIndex +1 }).then(() => {
     });
   };
+
+  const deleteTestCase = (id: string) => {
+    deleteSuiteBlock(appId, testSuiteId, id).then((suites: any) => {
+      const deletedTestCase = testCases.filter((item: any) => item.id !== id);
+      setTestCases(deletedTestCase);
+    })
+      .finally(() => {
+      });
+  }
   
 
   const handleRun = () => {
@@ -96,9 +105,7 @@ export function TestSuitePage() {
                 className="cursor-pointer"
                 color="red"
                 variant="soft"
-                onClick={() => deleteSuiteBlock(appId, testSuiteId, record.id).then(() => {
-                  getTestSuiteDetails();
-                })}
+                onClick={() => deleteTestCase(record.id)}
               >
                 <TrashIcon className="size-4" />
               </IconButton>

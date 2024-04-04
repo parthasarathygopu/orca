@@ -25,9 +25,15 @@ pub(crate) fn suite_route() -> Router {
                     "/block",
                     Router::new()
                         .route("/", get(get_suite_info).post(insert_block))
-                        .route("/:block_id", delete(delete_block)),
+                        .route("/:block_id", delete(delete_block))
+                        .route("/:block_id/reorder", post(reorder_block)),
                 ),
         )
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ReorderBlock {
+    location: i32,
 }
 
 /// list_suites - list all the Suites that is Bind with Current Application
@@ -88,6 +94,19 @@ async fn delete_block(
 ) -> InternalResult<impl IntoResponse> {
     let result = SuitService::new(session, app_id)
         .delete_block(block_id)
+        .await?;
+    Ok(Json(result))
+}
+
+
+/// reorder_block - this will reorder the block to new location
+async fn reorder_block(
+    Extension(session): Extension<OrcaSession>,
+    Path((app_id, suite_id, block_id)): Path<(Uuid, Uuid, Uuid)>,
+    Json(body): Json<ReorderBlock>,
+) -> InternalResult<impl IntoResponse> {
+    let result = SuitService::new(session, app_id)
+        .reorder_block(block_id, body.location)
         .await?;
     Ok(Json(result))
 }

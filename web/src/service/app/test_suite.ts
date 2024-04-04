@@ -47,7 +47,7 @@ export const deleteSuite = async (
     suiteId: string,
 ) => {
     let suiteItem = Service.delete(
-        `${Endpoint.v1.suite.itemList(appId, suiteId)}`
+        `${Endpoint.v1.suite.delete(appId, suiteId)}`
     )
         .then((suiteItem) => {
             return suiteItem;

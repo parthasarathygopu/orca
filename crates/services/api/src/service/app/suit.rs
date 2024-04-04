@@ -1,7 +1,10 @@
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseTransaction, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, QueryOrder, QuerySelect};
+use std::cmp::{max, min};
+
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseTransaction, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter, QueryOrder, QuerySelect, TryIntoModel};
+use sea_orm::ActiveValue::Set;
 use sea_orm_migration::SchemaManager;
 use sea_query::{Alias, Condition, Expr, Table};
-use tracing::info;
+use tracing::{debug, info};
 use uuid::Uuid;
 
 use entity::test::ui::case::case::{Column as CaseColumn, Entity as CaseEntity, Model as CaseModel};
@@ -155,7 +158,18 @@ impl SuitService {
         body.execution_order = _index;
         let _suite = body.clone().into_active_model();
         info!("{:?}", _suite);
-        let result = _suite.insert(self.trx()).await?;
+        let mut result = _suite.insert(self.trx()).await?;
+        if result.reference.is_some() {
+            let _ref = CaseEntity::find_by_id(result.reference.unwrap())
+                .one(self.trx())
+                .await?;
+            if _ref.is_some() {
+                let r = _ref.clone().unwrap();
+                info!("{:#?}", r);
+                result.name = Some(r.clone().name.clone());
+                result.description = r.description;
+            }
+        }
         Ok(result)
     }
 
@@ -166,5 +180,44 @@ impl SuitService {
     ) -> InternalResult<()> {
         BlockEntity::delete_by_id(block_id).exec(self.trx()).await?;
         return Ok(());
+    }
+
+
+    /// reorder_block - this function will reorder the block to new location
+    pub(crate) async fn reorder_block(
+        &self,
+        block_id: Uuid,
+        location: i32,
+    ) -> InternalResult<BlockModel> {
+        let block = BlockEntity::find_by_id(block_id).one(self.trx()).await?;
+        if block.is_none() {
+            return Err(OrcaRepoError::ModelNotFound(
+                "Block".to_string(),
+                block_id.to_string(),
+            ))?;
+        }
+        let mut block = block.unwrap();
+        let old_location = block.execution_order.clone();
+        let mut _filter = Condition::all()
+            .add(BlockColumn::SuiteId.eq(block.suite_id.clone()));
+        let mut expr = Expr::expr(Expr::col(BlockColumn::ExecutionOrder).if_null(0)).sub(0);
+        if location > old_location {
+            _filter = _filter.add(BlockColumn::ExecutionOrder.gt(old_location))
+                .add(BlockColumn::ExecutionOrder.lte(location));
+            expr = Expr::expr(Expr::col(BlockColumn::ExecutionOrder).if_null(0)).sub(1);
+        } else {
+            _filter = _filter.add(BlockColumn::ExecutionOrder.lt(old_location))
+                .add(BlockColumn::ExecutionOrder.gte(location));
+            expr = Expr::expr(Expr::col(BlockColumn::ExecutionOrder).if_null(0)).add(1);
+        }
+        let _result = BlockEntity::update_many().col_expr(
+            BlockColumn::ExecutionOrder,
+            expr,
+        ).filter(_filter).exec(self.trx()).await?;
+        debug!("updated result {:?}", _result);
+        let mut am_block = block.into_active_model();
+        am_block.execution_order = Set(location);
+        let result = am_block.save(self.trx()).await?.try_into_model()?;
+        return Ok(result);
     }
 }

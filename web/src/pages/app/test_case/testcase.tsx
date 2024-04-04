@@ -1,5 +1,5 @@
 import { PageHeader } from "core/components/page_header";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Service } from "service";
 import { Endpoint } from "service/endpoint";
@@ -8,8 +8,12 @@ import { shallow } from "zustand/shallow";
 
 import { PlayCircleIcon } from "@heroicons/react/24/outline";
 import { Workflow } from "core/components/flow";
+import { Spinner } from "core/components/spinner";
 import { flowStateSelector, useFlowStore } from "stores/flow.store";
+import { ToastComponent } from "core/components/toast";
 import { Button } from "@radix-ui/themes";
+
+import "./index.css";
 
 export interface TestCaseexecutionItem {
   case_id: string;
@@ -31,6 +35,8 @@ export interface TestCaseData {
 
 export function TestCasePage() {
   const { appId = "", testCaseId = "" } = useParams();
+  const [isDryRunLoading, setIsDryRunLoading] = useState(false);
+  const [showToast, setShowToast] = useState({ title: "", status: "" });
   const {
     setGraph
   } = useFlowStore(flowStateSelector, shallow);
@@ -40,7 +46,7 @@ export function TestCasePage() {
       .then((caseblock) => {
         setGraph(caseblock.case_execution || []);
       })
-      .finally(() => {});
+      .finally(() => { });
   };
 
   useEffect(() => {
@@ -54,12 +60,23 @@ export function TestCasePage() {
 
 
   const handleRun = () => {
-    Service.post(`${Endpoint.v1.case.run(appId, testCaseId)}`).finally(() =>
-      console.log("running"));
+    setIsDryRunLoading(true);
+    Service.post(`${Endpoint.v1.case.run(appId, testCaseId)}`).catch((err) => {
+      setIsDryRunLoading(false);
+      setShowToast({ title: "Dry Run was failed", status: "error" });
+    }).finally(() => {
+      setIsDryRunLoading(false);
+      setShowToast({ title: "Dry Run was successfull", status: "success" });
+    });
   };
 
   return (
     <>
+      {isDryRunLoading && (
+        <div className="loader">
+          <Spinner />
+        </div>
+      )}
       <PageHeader
         backIcon
         title={name}
@@ -77,6 +94,11 @@ export function TestCasePage() {
         }
       />
       <Workflow></Workflow>
+      {showToast.title && <ToastComponent
+        title={showToast.title}
+        onClose={() => setShowToast({ title: "", status: ""})}
+        status={showToast.status}
+      />}
     </>
   );
 }
