@@ -1,28 +1,73 @@
 import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import {
-  Button,
-  Flex,
-  IconButton,
-  Link,
-  Popover,
-  Text,
-  TextArea,
-  TextField,
-  Tooltip
-} from "@radix-ui/themes";
+import { Button, Flex, IconButton, Link, Popover, Text, TextArea, TextField, Tooltip } from "@radix-ui/themes";
 import { ColumnField } from "core/components/table";
 import { ReadOnlyTable } from "core/components/table/read";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Service } from "service";
-import { Endpoint } from "service/endpoint";
-import { fetchTestSuite } from "service/app/test_suite";
+import { fetchTestSuite, createNewSuit, deleteSuite } from "service/app/test_suite";
 
 export const TestSuiteDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [dataSource, setDataSource] = useState([] as any);
   const [testSuite, setTestSuite] = useState({} as any);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const { appId = "" } = useParams();
+
+  useEffect(() => {
+    getSuiteList();
+  }, []);
+
+  const setCreateTestSuite = (field_id: string, value: any) => {
+    let _data = { ...testSuite };
+    _data[field_id] = value;
+    setTestSuite(_data);
+  };
+
+  const getSuiteList = () => {
+    fetchTestSuite(appId).then((suites: any) => {
+      setDataSource(suites);
+    })
+      .finally(() => {
+      });
+  }
+
+  /**
+   * onCreateTestSuite - will create new Test suite
+   * @param data
+   */
+  const onCreateTestSuite = async () => {
+    let payload = {
+      ...testSuite,
+      app_id: appId
+    };
+
+    createNewSuit(appId, payload).then((suites: any) => {
+      getSuiteList();
+    })
+      .finally(() => {
+      });
+  };
+
+  /**
+   * onDelete - Delete theTest suite with a confirmation
+   * @param suiteId
+   */
+  const onDelete = async (suiteId: any) => {
+    deleteSuite(appId, suiteId).then((suites: any) => {
+      getSuiteList();
+    })
+      .finally(() => {
+      });
+  };
+
+
+    /**
+ * onHandleClick - Handle the Test suite redirect
+ * @param record
+ */
+    const onHandleClick = (record: any) => {
+      navigate(`${record.id}`);
+    };
 
   const extra: Array<React.ReactNode> = [
     <Popover.Root key="suitePopover">
@@ -31,7 +76,6 @@ export const TestSuiteDashboard: React.FC = () => {
           variant="soft"
           onClick={() => {
             setTestSuite({});
-            setIsCreateModalOpen(true);
           }}
         >
           <PlusIcon width="16" height="16" />
@@ -114,63 +158,6 @@ export const TestSuiteDashboard: React.FC = () => {
     }
   ];
 
-  const { appId = "" } = useParams();
-
-  const setCreateTestSuite = (field_id: string, value: any) => {
-    let _data = { ...testSuite };
-    _data[field_id] = value;
-    setTestSuite(_data);
-  };
-
-
-  const getSuiteList = () => {
-    fetchTestSuite(appId).then((suites: any) => {
-      setDataSource(suites);
-    })
-    .finally(() => {});
-  }
-
-  useEffect(() => {
-    getSuiteList();
-  }, []);
-
-  /**
-   * onHandleClick - Handle the Test suite redirect
-   * @param record
-   */
-  const onHandleClick = (record: any) => {
-    navigate(`${record.id}`);
-  };
-
-  /**
-   * onCreateTestSuite - will create new Test suite
-   * @param data
-   */
-  const onCreateTestSuite = async () => {
-    let payload = {
-      ...testSuite,
-      app_id: appId
-    };
-    await Service.post(`${Endpoint.v1.suite.create(appId)}`, {
-      body: payload
-    })
-      .then((record: any) => {
-        getSuiteList();
-      })
-      .finally(() => {});
-  };
-
-  /**
-   * onDelete - Delete theTest suite with a confirmation
-   * @param suiteId
-   */
-  const onDelete = async (suiteId: any) => {
-    await Service.delete(`${Endpoint.v1.suite.delete(appId, suiteId)}`)
-      .then(() => {
-        getSuiteList();
-      })
-      .finally(() => {});
-  };
 
   return (
     <ReadOnlyTable

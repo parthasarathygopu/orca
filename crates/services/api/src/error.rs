@@ -1,11 +1,15 @@
+use std::backtrace::Backtrace;
+
 use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
 use axum::Json;
+use axum::response::{IntoResponse, Response};
+use sea_orm::DbErr;
+use serde_json::{Error as SerdeJsonError, json};
+use thiserror::Error;
+use tracing::error;
+
 use cerium::error::CeriumError;
 use engine::error::EngineError;
-use sea_orm::DbErr;
-use serde_json::{json, Error as SerdeJsonError};
-use thiserror::Error;
 
 use crate::error::OrcaError::RepoError;
 
@@ -26,7 +30,6 @@ pub enum OrcaRepoError {
 #[derive(Error, Debug)]
 pub enum OrcaError {
     /// Something went wrong when calling the user repo.
-
     #[error("DbErr error: {0}")]
     DataBaseError(#[from] DbErr),
 
@@ -96,7 +99,7 @@ impl IntoResponse for OrcaError {
                 "Internal Error Not Specify".to_string(),
             ),
         };
-
+        error!("Error: {}", Backtrace::force_capture());
         let body = Json(json!({
             "error": error_message,
         }));

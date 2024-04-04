@@ -1,31 +1,52 @@
 import { PageHeader } from "core/components/page_header";
 import { useEffect, useState } from "react";
-import { PlusIcon, PlayCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { PlayCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useParams } from "react-router-dom";
-import {
-  Button, Flex, IconButton,
-  Tooltip
-} from "@radix-ui/themes";
+import { Button, Flex, IconButton, Tooltip } from "@radix-ui/themes";
 import { ColumnField } from "core/components/table";
 import { ReadOnlyTable } from "core/components/table/read";
 import { SearchableDropdown } from "core/components/dropdown/index.jsx";
 import { fetchTestCases } from "service/app/test_case";
-import { fetchSuiteItems, batchUpdate } from "service/app/test_suite";
+import {
+  batchUpdate,
+  deleteSuiteBlock,
+  fetchSuiteItems,
+  insertSuiteBlock,
+  reorderSuiteBlock
+} from "service/app/test_suite";
 import "./index.css";
 
 export function TestSuitePage() {
   const { appId = "", testSuiteId = "" } = useParams();
-  const [testCaseList, setTestCaseList] = useState([] as any);
+  const [testCaseDatasource, setTestCaseDatasource] = useState([] as any);
   const [testSuiteDetails, setTestSuiteDetails] = useState([] as any);
   const [testCases, setTestCases] = useState([] as any);
   const [selectedTestCase, setSelectedTestCase] = useState({} as any);
 
+  useEffect(() => {
+    getTestSuiteDetails();
+    getCaseList()
+  }, [appId]);
+
 
   const getCaseList = () => {
     fetchTestCases(appId).then((cases: any) => {
-      setTestCaseList(cases);
+      setTestCaseDatasource(cases);
     })
-      .finally(() => { });
+      .finally(() => {
+      });
+  }
+
+
+  const addBlock = (testCaseObj: any) => {
+    let payload = {
+      reference: testCaseObj.id, execution_order: testCases.length + 1,
+      type_field: "TestCase", suite_id: testSuiteId
+    };
+    insertSuiteBlock(appId, testSuiteId, payload).then((item) => {
+      setTestCases([...testCases, item]);
+      setSelectedTestCase({});
+    });
   }
 
   const getTestSuiteDetails = () => {
@@ -33,13 +54,17 @@ export function TestSuitePage() {
       setTestSuiteDetails(suites);
       setTestCases(suites.suite_execution)
     })
-      .finally(() => { });
+      .finally(() => {
+      });
   }
 
-  useEffect(() => {
-    getTestSuiteDetails();
-    getCaseList()
-  }, [appId]);
+  const reorderTestCase = (updatedList: any, newIndex: number) => {
+    setTestCases(updatedList);
+    const blockId = updatedList[newIndex].id;
+    reorderSuiteBlock(appId, testSuiteId, blockId, { location: newIndex }).then(() => {
+    });
+  };
+  
 
   const handleRun = () => {
     // Service.post(`${Endpoint.v1.suite.run(appId, testSuiteId)}`).finally(() =>
@@ -71,10 +96,9 @@ export function TestSuitePage() {
                 className="cursor-pointer"
                 color="red"
                 variant="soft"
-                onClick={() => {
-                  const newList = testCases.filter((data: any) => data.id !== record.id);
-                  updateTestCase(newList);
-                }}
+                onClick={() => deleteSuiteBlock(appId, testSuiteId, record.id).then(() => {
+                  getTestSuiteDetails();
+                })}
               >
                 <TrashIcon className="size-4" />
               </IconButton>
@@ -84,18 +108,6 @@ export function TestSuitePage() {
       }
     }
   ];
-
-  const updateTestCase = (updatedList: any) => {
-    setSelectedTestCase({});
-    const newList: [] = updatedList.map((data: any, index: number) => {
-      return { reference: data.id,  execution_order: index + 1, type_field: "TestCase", suite_id: testSuiteId };
-    });
-    setTestCases(newList);
-
-    batchUpdate(appId, testSuiteId, newList)
-      .then((cases: any) => { })
-      .finally(() => { });
-  };
 
   return (
     <>
@@ -119,7 +131,7 @@ export function TestSuitePage() {
         <div className="selectTestCase">
           <h1><b>Select test case</b></h1>
           <SearchableDropdown
-            options={testCaseList || []}
+            options={testCaseDatasource || []}
             label="name"
             id="id"
             selectedValue={selectedTestCase}
@@ -130,7 +142,7 @@ export function TestSuitePage() {
           <Button
             variant="soft"
             onClick={() => {
-              selectedTestCase.id && updateTestCase([...testCases, selectedTestCase]);
+              selectedTestCase.id && addBlock(selectedTestCase);
             }}
           >
             <PlusIcon width="16" height="16" />
@@ -141,7 +153,7 @@ export function TestSuitePage() {
           column={columns}
           data={testCases}
           showPagination={false}
-          onDragEnd={(data: any) => updateTestCase(data)}
+          onDragEnd={(data: any, newIndex: number) => reorderTestCase(data, newIndex)}
           isDragAllowed={true}
         />
       </div>

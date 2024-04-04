@@ -2,7 +2,7 @@ use axum::{Extension, Json, Router};
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::routing::{get, post};
+use axum::routing::{delete, get, post};
 use uuid::Uuid;
 
 use entity::test::ui::suit::suite::Model;
@@ -19,10 +19,13 @@ pub(crate) fn suite_route() -> Router {
         .nest(
             "/:suite_id",
             Router::new()
-                .route("/batch/update", post(update_block))
+                .route("/batch", post(update_block))
+                .route("/", delete(delete_suite))
                 .nest(
                     "/block",
-                    Router::new().route("/", get(get_suite_info).post(insert_block)),
+                    Router::new()
+                        .route("/", get(get_suite_info).post(insert_block))
+                        .route("/:block_id", delete(delete_block)),
                 ),
         )
 }
@@ -46,6 +49,15 @@ async fn create_suite(
     Ok((StatusCode::CREATED, Json(result)))
 }
 
+/// delete_suite - This will delete the Suite for the specific Application in Orca
+async fn delete_suite(
+    Extension(session): Extension<OrcaSession>,
+    Path((app_id, suite_id)): Path<(Uuid, Uuid)>,
+) -> InternalResult<impl IntoResponse> {
+    let result = SuitService::new(session, app_id).delete(suite_id).await?;
+    Ok((StatusCode::OK, Json(result)))
+}
+
 /// get_suits_info - Get Suite Info and the batch information with the list of block
 async fn get_suite_info(
     Extension(session): Extension<OrcaSession>,
@@ -65,6 +77,17 @@ async fn insert_block(
 ) -> InternalResult<impl IntoResponse> {
     let result = SuitService::new(session, app_id)
         .push_block(suite_id, body, None)
+        .await?;
+    Ok(Json(result))
+}
+
+/// delete_block - This will Append New Block to the code for spe
+async fn delete_block(
+    Extension(session): Extension<OrcaSession>,
+    Path((app_id, suite_id, block_id)): Path<(Uuid, Uuid, Uuid)>,
+) -> InternalResult<impl IntoResponse> {
+    let result = SuitService::new(session, app_id)
+        .delete_block(block_id)
         .await?;
     Ok(Json(result))
 }
