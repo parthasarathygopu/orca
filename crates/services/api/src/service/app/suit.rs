@@ -7,6 +7,10 @@ use sea_query::{Alias, Condition, Expr, Table};
 use tracing::{debug, info};
 use uuid::Uuid;
 
+use cerium::client::Client;
+use cerium::client::driver::web::WebDriver;
+use engine::controller::case::CaseController;
+use engine::controller::suite::SuiteController;
 use entity::test::ui::case::case::{Column as CaseColumn, Entity as CaseEntity, Model as CaseModel};
 use entity::test::ui::suit::suite::{Column, Entity, Model};
 use entity::test::ui::suit::suite_block::{
@@ -219,5 +223,15 @@ impl SuitService {
         am_block.execution_order = Set(location);
         let result = am_block.save(self.trx()).await?.try_into_model()?;
         return Ok(result);
+    }
+
+
+    /// run - this will run the single testsuite
+    pub async fn run(&self, client: Client, suite_id: Uuid) -> InternalResult<()> {
+        let ui_driver = WebDriver::default().await?;
+        let controller = SuiteController::new(self.trx(), ui_driver.clone(), client.clone());
+        controller.run(suite_id, true).await?;
+        ui_driver.quit().await?;
+        Ok(())
     }
 }

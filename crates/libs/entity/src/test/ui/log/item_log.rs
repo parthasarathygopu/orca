@@ -37,6 +37,9 @@ pub enum ItemLogType {
     #[sea_orm(string_value = "TC")]
     #[serde(rename = "TestCase")]
     TestCase,
+    #[sea_orm(string_value = "TS")]
+    #[serde(rename = "TestSuite")]
+    TestSuite,
 }
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Deserialize, Serialize)]
@@ -45,7 +48,7 @@ pub struct Model {
     #[serde(skip_deserializing)]
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub ref_id: Uuid,
+    pub ref_id: i32,
     pub ref_type: ItemLogType,
 
     pub step_id: Uuid,
@@ -59,7 +62,26 @@ pub struct Model {
     pub finished_at: DateTimeWithTimeZone,
 }
 
-pub fn new(ref_id: Uuid, ref_type: ItemLogType, step_id: Uuid, log_id: Option<i32>) -> ActiveModel {
+impl ActiveModel {
+    pub fn new(ref_id: i32, ref_type: ItemLogType, step_id: Uuid, log_id: Option<i32>) -> ActiveModel {
+        ActiveModel {
+            id: Default::default(),
+            ref_id: Set(ref_id),
+            ref_type: Set(ref_type),
+            step_id: Set(step_id),
+            has_screenshot: Set(false),
+            has_recording: Set(false),
+            execution_time: Set(0),
+            status: Set(ItemLogStatus::Running),
+            log_id: Set(log_id),
+            created_at: Set(chrono::Utc::now().into()),
+            created_by: Set("System".to_string()),
+            finished_at: Set(chrono::Utc::now().into()),
+        }
+    }
+}
+
+pub fn new(ref_id: i32, ref_type: ItemLogType, step_id: Uuid, log_id: Option<i32>) -> ActiveModel {
     ActiveModel {
         id: Default::default(),
         ref_id: Set(ref_id),

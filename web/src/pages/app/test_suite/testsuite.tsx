@@ -11,7 +11,8 @@ import {
   deleteSuiteBlock,
   fetchSuiteItems,
   insertSuiteBlock,
-  reorderSuiteBlock
+  reorderSuiteBlock,
+  dryRun,
 } from "service/app/test_suite";
 import "./index.css";
 
@@ -57,6 +58,12 @@ export function TestSuitePage() {
       });
   }
 
+  const handleRun = () => {
+    dryRun(appId, testSuiteId).then(() => {
+        console.log("Dry run completed");
+    });
+  };
+
   const reorderTestCase = (updatedList: any, newIndex: number) => {
     setTestCases(updatedList);
     const blockId = updatedList[newIndex].id;
@@ -74,13 +81,6 @@ export function TestSuitePage() {
       });
   }
   
-
-  const handleRun = () => {
-    // Service.post(`${Endpoint.v1.suite.run(appId, testSuiteId)}`).finally(() =>
-    //   setIsRunning(false)
-    // );
-  };
-
 
   const columns: Array<ColumnField> = [
     {

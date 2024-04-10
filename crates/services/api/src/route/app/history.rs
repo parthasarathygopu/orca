@@ -11,6 +11,9 @@ use crate::service::app::history::HistoryService;
 /// history_route - this will register all the endpoint in Execution history route
 pub(crate) fn history_route() -> Router {
     Router::new()
+        .nest("/:history_id", Router::new()
+            .route("/log", get(get_history)),
+        )
         .route("/", get(get_history))
 }
 

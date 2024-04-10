@@ -247,7 +247,7 @@ impl<'ccl> ActionController<'ccl> {
     pub async fn execute_action(&self, action: &action::Model, er: &ExecutionRequest,
                                 log: Option<&ItemLog>) -> EngineResult<()> {
         let log_id = log.map(|l| l.id);
-        let mut log_am = new(er.ref_id, ItemLogType::Action, action.id, log_id).save(self.db).await?;
+        let mut log_am = new(er.id, ItemLogType::Action, action.id, log_id).save(self.db).await?;
         info!("[{er}] Trigger Action {action_id}", er=er.ref_id, action_id = action.id);
         let start = chrono::Utc::now();
         info!(
@@ -285,7 +285,7 @@ impl<'ccl> ActionController<'ccl> {
     pub async fn execute(&self, id: Uuid, er: &ExecutionRequest,
                          log: Option<&ItemLog>) -> EngineResult<()> {
         let start = chrono::Utc::now();
-        let mut log_am = new(er.ref_id, ItemLogType::Action, id, None).save(self.db).await?;
+        let mut log_am = new(er.id, ItemLogType::Action, id, None).save(self.db).await?;
         info!("[{er}] Trigger Action {action_id}", er=er.ref_id, action_id = id);
         let action_group = ActionGroupEntity::find_by_id(id).one(self.db)
             .await?

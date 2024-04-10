@@ -5,6 +5,7 @@ use axum::response::IntoResponse;
 use axum::routing::{delete, get, post};
 use uuid::Uuid;
 
+use cerium::client::Client;
 use entity::test::ui::suit::suite::Model;
 use entity::test::ui::suit::suite_block::Model as BlockModel;
 
@@ -21,6 +22,7 @@ pub(crate) fn suite_route() -> Router {
             Router::new()
                 .route("/batch", post(update_block))
                 .route("/", delete(delete_suite))
+                .route("/dryrun", post(dry_run))
                 .nest(
                     "/block",
                     Router::new()
@@ -120,5 +122,16 @@ async fn update_block(
     let result = SuitService::new(session, app_id)
         .batch_update_suite_block(suite_id, body)
         .await?;
+    Ok(Json(result))
+}
+
+
+/// dry_run - Dry run the TestSuite
+async fn dry_run(
+    Extension(session): Extension<OrcaSession>,
+    Extension(cli): Extension<Client>,
+    Path((app_id, suite_id)): Path<(Uuid, Uuid)>,
+) -> InternalResult<impl IntoResponse> {
+    let result = SuitService::new(session, app_id).run(cli, suite_id).await?;
     Ok(Json(result))
 }

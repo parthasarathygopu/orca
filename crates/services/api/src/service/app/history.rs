@@ -1,8 +1,11 @@
-use sea_orm::{ActiveModelTrait, DatabaseTransaction, EntityTrait, QueryOrder};
+use sea_orm::{ActiveModelTrait, DatabaseTransaction, EntityTrait};
 use sea_orm::ActiveValue::Set;
 use uuid::Uuid;
+
+use entity::prelude::{ExecutionRequest, ExecutionRequestEntity};
 use entity::test::history;
-use entity::test::history::{Entity, Column, Model, ExecutionKind, ExecutionType, ExecutionStatus};
+use entity::test::history::{ExecutionKind, ExecutionStatus, ExecutionType, Model};
+
 use crate::error::InternalResult;
 use crate::server::session::OrcaSession;
 
@@ -18,11 +21,8 @@ impl HistoryService {
     }
 
     /// list all the History Data in the Orca Application
-    pub async fn list_history(&self) -> InternalResult<Vec<Model>> {
-        let histories = Entity::find()
-            .order_by_desc(Column::Id)
-            .all(self.trx())
-            .await?;
+    pub async fn list_history(&self) -> InternalResult<Vec<ExecutionRequest>> {
+        let histories = ExecutionRequestEntity::find().all(self.trx()).await?;
         Ok(histories)
     }
 
@@ -41,6 +41,4 @@ impl HistoryService {
         };
         Ok(history.insert(self.trx()).await?)
     }
-
-
 }

@@ -30,15 +30,35 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(user::Column::Id)
-                            .integer()
-                            .auto_increment()
+                            .string()
                             .not_null()
                             .primary_key(),
                     )
                     .col(ColumnDef::new(user::Column::Name).string().not_null())
                     .col(ColumnDef::new(user::Column::FirstName).string().not_null())
                     .col(ColumnDef::new(user::Column::LastName).string())
-                    .col(ColumnDef::new(user::Column::Email).string().not_null())
+                    .col(ColumnDef::new(user::Column::Email).string().unique_key().not_null())
+                    .col(ColumnDef::new(user::Column::ProfileUrl).string())
+
+                    .col(ColumnDef::new(user::Column::CreatedAt).timestamp_with_time_zone().default(Expr::current_timestamp()).not_null())
+                    .col(ColumnDef::new(user::Column::UpdatedAt).timestamp_with_time_zone().default(Expr::current_timestamp()).not_null())
+                    .col(ColumnDef::new(user::Column::DeletedAt).timestamp_with_time_zone())
+                    .col(ColumnDef::new(user::Column::CreatedBy).string())
+                    .col(ColumnDef::new(user::Column::UpdatedBy).string())
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from(user::Entity, user::Column::CreatedBy)
+                            .to(user::Entity, user::Column::Id)
+                            .on_delete(ForeignKeyAction::NoAction)
+                            .on_update(ForeignKeyAction::NoAction),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from(user::Entity, user::Column::UpdatedBy)
+                            .to(user::Entity, user::Column::Id)
+                            .on_delete(ForeignKeyAction::NoAction)
+                            .on_update(ForeignKeyAction::NoAction),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -470,7 +490,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(item_log::Column::RefId)
-                            .uuid()
+                            .integer()
                             .not_null(),
                     )
                     .col(
