@@ -10,6 +10,7 @@ import {fetchTestCases} from "service/app/test_case";
 import {
     batchUpdate,
     deleteSuiteBlock,
+    dryRun,
     fetchSuiteItems,
     insertSuiteBlock,
     reorderSuiteBlock
@@ -66,9 +67,9 @@ export function TestSuitePage() {
     }, [appId]);
 
     const handleRun = () => {
-        // Service.post(`${Endpoint.v1.suite.run(appId, testSuiteId)}`).finally(() =>
-        //   setIsRunning(false)
-        // );
+        dryRun(appId, testSuiteId).then(() => {
+            console.log("Dry run completed");
+        });
     };
 
 

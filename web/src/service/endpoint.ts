@@ -29,6 +29,8 @@ export const Endpoint = {
                 `/api/v1/app/${appId}/suite/${suiteId}/batch`,
             insertSuitBlock: (appId: string, suiteId: string) =>
                 `/api/v1/app/${appId}/suite/${suiteId}/block`,
+            dryRun: (appId: string, suiteId: string) =>
+                `/api/v1/app/${appId}/suite/${suiteId}/dryrun`,
             deleteSuiteBlock: (appId: string, suiteId: string, blockId: string) =>
                 `/api/v1/app/${appId}/suite/${suiteId}/block/${blockId}`,
             reorderSuiteBlock: (appId: string, suiteId: string, blockId: string) =>

@@ -1,17 +1,17 @@
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseTransaction, EntityTrait, IntoActiveModel, PaginatorTrait, QueryFilter, QueryOrder, TryIntoModel};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseTransaction, EntityTrait,
+              PaginatorTrait, QueryFilter, QueryOrder, TryIntoModel};
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::Uuid;
 use tracing::{debug, info};
 
 use cerium::client::Client;
 use cerium::client::driver::web::WebDriver;
-use entity::prelude::case::Entity;
-use entity::prelude::case_block;
+use entity::prelude::{ActiveExecutionRequest, ActiveItemLog, case_block, CaseEntity, ExecutionKind, ExecutionStatus, ExecutionType};
 use entity::prelude::case_block::{BlockKind, BlockType};
-use entity::test::ui::{ExecutionRequest, request};
 use entity::test::ui::case::case;
-use entity::test::ui::log::{item_log, ItemLog};
-use entity::test::ui::log::item_log::{ItemLogStatus, ItemLogType, new};
+use entity::test::ui::ExecutionRequest;
+use entity::test::ui::log::item_log::{ItemLogStatus, ItemLogType};
+use entity::test::ui::log::ItemLog;
 
 use crate::controller::action::ActionController;
 use crate::error::{EngineError, EngineResult};
@@ -32,57 +32,64 @@ impl<'ccl> CaseController<'ccl> {
     }
 
 
-    /// run - will execute the test cases based on the execution request
-    pub async fn run(&self, id: Uuid, er: &ExecutionRequest, log: Option<&ItemLog>) -> EngineResult<()> {
-        info!("[{er}] Trigger Test Case {action_id}", er=er.ref_id, action_id = id);
+    /// execute - will execute the test cases based on the execution request
+    pub async fn execute(&self, id: Uuid, er: &ExecutionRequest, log: Option<&ItemLog>) -> EngineResult<()> {
         let start = chrono::Utc::now();
         let log_id = log.map(|l| l.id);
-        let mut log_am = new(er.ref_id, ItemLogType::ActionGroup, id, log_id).save(self.db).await?;
-        // let mut log_item = item_log::Model {
-        //     ref_id: er.ref_id,
-        //     ref_type: ItemLogType::TestCase,
-        //     step_id: id,
-        //     has_screenshot: false,
-        //     has_recording: false,
-        //     execution_time: 0,
-        //     status: ItemLogStatus::Running,
-        //     log_id: None,
-        //     created_at: start.into(),
-        //     created_by: "system".to_string(),
-        //     finished_at: chrono::Utc::now().into(),
-        //     ..Default::default()
-        // };
-        // if log.is_some() {
-        //     log_item.log_id = Some(log.unwrap().id);
-        // }
-        // let mut log_item_am = log_item.into_active_model().save(self.db).await?;
-        let case = Entity::find_by_id(id).one(self.db).await?
-            .ok_or(EngineError::MissingParameter("ActionGroup".to_string(), id.into()))?;
-        let log = log_am.clone().try_into_model()?;
-        self.process(&case, er, Some(&log)).await?;
+        let mut action_log = ActiveItemLog::new(er.id, ItemLogType::TestCase,
+                                                id, log_id).save(self.db).await?;
+        let case = CaseEntity::find_by_id(id).one(self.db).await?
+            .ok_or(EngineError::MissingParameter("Case".to_string(), id.into()))?;
+        let log = action_log.clone().try_into_model()?;
+        let result = self.process(&case, er, Some(&log)).await;
 
-        log_am.execution_time = Set((chrono::Utc::now() - start).num_milliseconds() as i32);
-        log_am.status = Set(ItemLogStatus::Success);
-        log_am.finished_at = Set(chrono::Utc::now().into());
-        log_am.save(self.db).await?;
+        action_log.finished_at = Set(chrono::Utc::now().into());
+        action_log.execution_time = Set((chrono::Utc::now() - start).num_milliseconds() as i32);
+        match result {
+            Ok(_) => {
+                action_log.status = Set(ItemLogStatus::Success);
+                action_log.save(self.db).await?;
+            }
+            Err(e) => {
+                action_log.status = Set(ItemLogStatus::Failed);
+                action_log.save(self.db).await?;
+                return Err(e);
+            }
+        }
+        return Ok(());
+    }
+
+
+    pub async fn runner(&self, id: Uuid, is_dry_run: bool) -> EngineResult<()> {
+        let mut am_er = ActiveExecutionRequest::new(id, ExecutionType::TestCase,
+                                                    ExecutionKind::Trigger,
+                                                    ExecutionStatus::Started, 0,
+                                                    is_dry_run, Some(format!("[TC] Executing - {id}")), ).save(self.db).await?;
+        let model_er = am_er.clone().try_into_model()?;
+        info!("[{er}] Trigger Test Case {case_id}", er=model_er.id, case_id = id);
+        self.execute(id, &model_er, None).await?;
+        am_er.finished_at = Set(chrono::Utc::now().into());
+        am_er.status = Set(ExecutionStatus::Completed);
+        am_er.save(self.db).await?;
         Ok(())
     }
 
 
-    /// run_case - will execute the test case by the case ID
-    // pub async fn run_case(&self, id: Uuid) -> EngineResult<()> {
-    //     let case_res = Entity::find_by_id(id).one(self.db).await?;
-    //     if case_res.is_none() {
-    //         error!("Unable to find the Case - {:?}", id.clone());
-    //         return Ok(());
-    //     }
-    //     let case: &case::Model = &case_res.unwrap();
-    //     info!(
-    //         "Start Processing Case - [[ {name} || {id} ]]",
-    //         name = case.name,
-    //         id = case.id
-    //     );
-    //     self.process(case).await?;
+    // /// run - will execute the test cases based on the execution request
+    // pub async fn run(&self, id: Uuid, er: &ExecutionRequest, log: Option<&ItemLog>) -> EngineResult<()> {
+    //     info!("[{er}] Trigger Test Case {action_id}", er=er.ref_id, action_id = id);
+    //     let start = chrono::Utc::now();
+    //     let log_id = log.map(|l| l.id);
+    //     let mut log_am = new(er.id, ItemLogType::TestCase, id, log_id).save(self.db).await?;
+    //     let case = Entity::find_by_id(id).one(self.db).await?
+    //         .ok_or(EngineError::MissingParameter("ActionGroup".to_string(), id.into()))?;
+    //     let log = log_am.clone().try_into_model()?;
+    //     self.process(&case, er, Some(&log)).await?;
+    //
+    //     log_am.execution_time = Set((chrono::Utc::now() - start).num_milliseconds() as i32);
+    //     log_am.status = Set(ItemLogStatus::Success);
+    //     log_am.finished_at = Set(chrono::Utc::now().into());
+    //     log_am.save(self.db).await?;
     //     Ok(())
     // }
 

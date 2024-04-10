@@ -170,4 +170,24 @@ export const fetchSuiteItems = async (
 };
 
 
+// dryRun - will trigger dry run for the suite
+// this will not run the actual test case but will return the test case
+export const dryRun = async (
+    appId: string,
+    suiteId: string,
+) => {
+    let dryRun = Service.post(
+        `${Endpoint.v1.suite.dryRun(appId, suiteId)}`, {body: {}}
+    )
+        .then((dryrun) => {
+            return dryrun;
+        })
+        .catch((error) => {
+            console.error("fetch Actions failed with some reason =", error);
+            return [];
+        });
+    return dryRun;
+};
+
+
 
