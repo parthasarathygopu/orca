@@ -1,13 +1,10 @@
-import { useEffect, useState } from "react";
-import { NodeProps, Position, useNodeId } from "reactflow";
+import { useEffect } from "react";
+import { NodeProps, Position } from "reactflow";
 import { useFlowStore } from "stores/flow.store";
 import { classNames } from "..";
 import CustomHandle from "../handler/test";
 
 export const ActionNode: React.FC<NodeProps> = ({ data, xPos, yPos }) => {
-  const [selected, setValueSelected] = useState({} as any);
-  const [open, setOpen] = useState(false);
-  const nodeId = useNodeId();
   let bgColor =
     data?.payload?.type_field == "Assertion" ? "bg-red-100" : "bg-indigo-100";
 
@@ -35,7 +32,7 @@ export const ActionNode: React.FC<NodeProps> = ({ data, xPos, yPos }) => {
           className="self-center p-2 align-middle text-center "
           onClick={() => useFlowStore.getState().setCurrentNode(data?.payload)}
         >
-          [ {data?.payload?.type_field} ] - {data?.payload?.name}
+          {data?.payload?.name ? data?.payload?.name : `Configure [${data?.payload?.type_field}]`}
         </div>
       </div>
 

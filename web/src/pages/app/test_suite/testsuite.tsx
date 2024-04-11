@@ -63,6 +63,10 @@ export function TestSuitePage() {
   }
 
   const handleRun = () => {
+    if(testCases.length === 0) {
+      setShowToast({ title: "No test case was configured ", status: "error" });
+      return null;
+    }
     setIsDryRunLoading(true);
     dryRun(appId, testSuiteId).then(() => {
         setIsDryRunLoading(false);

@@ -38,6 +38,7 @@ export function TestCasePage() {
   const [isDryRunLoading, setIsDryRunLoading] = useState(false);
   const [showToast, setShowToast] = useState({ title: "", status: "" });
   const {
+    graph,
     setGraph
   } = useFlowStore(flowStateSelector, shallow);
 
@@ -60,6 +61,13 @@ export function TestCasePage() {
 
 
   const handleRun = () => {
+    useFlowStore.getState().setCurrentNode({})
+    if(graph.length === 0) {
+      setShowToast({ title: "No action was configured", status: "error" });
+      return null;
+    }
+    const checkValidTestCase = graph.some(item => !item.reference)
+    if(!checkValidTestCase) {
     setIsDryRunLoading(true);
     Service.post(`${Endpoint.v1.case.run(appId, testCaseId)}`).catch((err) => {
       setIsDryRunLoading(false);
@@ -68,6 +76,9 @@ export function TestCasePage() {
       setIsDryRunLoading(false);
       setShowToast({ title: "Dry Run was successfull", status: "success" });
     });
+  } else {
+    setShowToast({ title: "Some action was not configured properly", status: "error" });
+  }
   };
 
   return (
