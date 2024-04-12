@@ -97,6 +97,14 @@ export function TestCasePage() {
               variant="soft"
               className="flex items-center gap-3"
               onClick={handleRun}
+            >
+             Save
+            </Button>
+
+            <Button
+              variant="soft"
+              className="flex items-center gap-3"
+              onClick={handleRun}
               color="indigo"
             >
               <PlayCircleIcon className="size-4" /> Dry Run

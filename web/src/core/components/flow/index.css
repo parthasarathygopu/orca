@@ -21,4 +21,7 @@
     transform: rotate(-45deg);
   }
   
+  .workflow{
+    height: calc(100% - 66px);
+  }
   

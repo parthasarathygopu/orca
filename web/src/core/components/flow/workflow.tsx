@@ -14,6 +14,8 @@ import { ActionNode } from "./node/action";
 // import { LoopNode } from "./node/loop";
 import { NewNode } from "./node/new";
 
+import "./index.css";
+
 const nodeTypes = {
   newNode: NewNode,
   actionNode: ActionNode,
@@ -53,7 +55,7 @@ export const Workflow: React.FC<WorkflowParam> = (
   }, []);
 
   return (
-    <div className="flex h-dvh w-full flex-row">
+    <div className="flex w-full flex-row workflow">
       <div className="basis-3/4 flex-1 border border-indigo-500/20">
         <ReactFlow
           nodes={nodes}
@@ -62,13 +64,13 @@ export const Workflow: React.FC<WorkflowParam> = (
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           panOnDrag
-          fitView
+          fitView={currentNode}
         >
           <Background
             className="bg-blue-50"
             variant={BackgroundVariant.Cross}
           />
-          <Controls />
+          <Controls showInteractive={true}/>
         </ReactFlow>
       </div>
       {currentNode?.id != undefined ? (
