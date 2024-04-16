@@ -171,71 +171,71 @@ impl MigrationTrait for Migration {
             }
                 .insert(db)
                 .await?,
-            case_block::ActiveModel {
-                id: Set(Uuid::new_v4()),
-                execution_order: Set(2),
-                kind: Set(BlockKind::Reference),
-                type_field: Set(BlockType::Assertion),
-                name: Set(Some(assert_g_m.name.clone())),
-                desc: Set(assert_g_m.description.clone()),
-                reference: Set(Some(assert_g_m.clone().id)),
-                case_id: Set(case_m.clone().id),
-                ..Default::default()
-            }
-                .insert(db)
-                .await?,
-            case_block::ActiveModel {
-                id: Set(uuid1.clone()),
-                execution_order: Set(3),
-                kind: Set(BlockKind::SelfReference),
-                name: Set(Some("This is a condition block".to_string())),
-                desc: Set(Some("This is a condition block".to_string())),
-                type_field: Set(BlockType::Condition),
-                case_id: Set(case_m.clone().id),
-                ..Default::default()
-            }
-                .insert(db)
-                .await?,
-            case_block::ActiveModel {
-                id: Set(uuid2.clone()),
-                execution_order: Set(1),
-                kind: Set(BlockKind::SelfReference),
-                name: Set(Some("This is yes block".to_string())),
-                desc: Set(Some("This is yes condition block".to_string())),
-                type_field: Set(BlockType::YesCase),
-                parent_id: Set(Some(uuid1.clone())),
-                case_id: Set(case_m.clone().id),
-                ..Default::default()
-            }
-                .insert(db)
-                .await?,
-            case_block::ActiveModel {
-                id: Set(uuid3.clone()),
-                execution_order: Set(2),
-                kind: Set(BlockKind::SelfReference),
-                name: Set(Some("This is no block".to_string())),
-                desc: Set(Some("This is no condition block".to_string())),
-                type_field: Set(BlockType::NoCase),
-                parent_id: Set(Some(uuid1.clone())),
-                case_id: Set(case_m.clone().id),
-                ..Default::default()
-            }
-                .insert(db)
-                .await?,
-            case_block::ActiveModel {
-                id: Set(Uuid::new_v4()),
-                execution_order: Set(1),
-                kind: Set(BlockKind::Reference),
-                name: Set(Some(app_g.name.clone())),
-                desc: Set(app_g.description.clone()),
-                type_field: Set(BlockType::ActionGroup),
-                reference: Set(Some(app_g.clone().id)),
-                parent_id: Set(Some(uuid2.clone())),
-                case_id: Set(case_m.clone().id),
-                ..Default::default()
-            }
-                .insert(db)
-                .await?,
+            // case_block::ActiveModel {
+            //     id: Set(Uuid::new_v4()),
+            //     execution_order: Set(2),
+            //     kind: Set(BlockKind::Reference),
+            //     type_field: Set(BlockType::Assertion),
+            //     name: Set(Some(assert_g_m.name.clone())),
+            //     desc: Set(assert_g_m.description.clone()),
+            //     reference: Set(Some(assert_g_m.clone().id)),
+            //     case_id: Set(case_m.clone().id),
+            //     ..Default::default()
+            // }
+            //     .insert(db)
+            //     .await?,
+            // case_block::ActiveModel {
+            //     id: Set(uuid1.clone()),
+            //     execution_order: Set(3),
+            //     kind: Set(BlockKind::SelfReference),
+            //     name: Set(Some("This is a condition block".to_string())),
+            //     desc: Set(Some("This is a condition block".to_string())),
+            //     type_field: Set(BlockType::Condition),
+            //     case_id: Set(case_m.clone().id),
+            //     ..Default::default()
+            // }
+            //     .insert(db)
+            //     .await?,
+            // case_block::ActiveModel {
+            //     id: Set(uuid2.clone()),
+            //     execution_order: Set(1),
+            //     kind: Set(BlockKind::SelfReference),
+            //     name: Set(Some("This is yes block".to_string())),
+            //     desc: Set(Some("This is yes condition block".to_string())),
+            //     type_field: Set(BlockType::YesCase),
+            //     parent_id: Set(Some(uuid1.clone())),
+            //     case_id: Set(case_m.clone().id),
+            //     ..Default::default()
+            // }
+            //     .insert(db)
+            //     .await?,
+            // case_block::ActiveModel {
+            //     id: Set(uuid3.clone()),
+            //     execution_order: Set(2),
+            //     kind: Set(BlockKind::SelfReference),
+            //     name: Set(Some("This is no block".to_string())),
+            //     desc: Set(Some("This is no condition block".to_string())),
+            //     type_field: Set(BlockType::NoCase),
+            //     parent_id: Set(Some(uuid1.clone())),
+            //     case_id: Set(case_m.clone().id),
+            //     ..Default::default()
+            // }
+            //     .insert(db)
+            //     .await?,
+            // case_block::ActiveModel {
+            //     id: Set(Uuid::new_v4()),
+            //     execution_order: Set(1),
+            //     kind: Set(BlockKind::Reference),
+            //     name: Set(Some(app_g.name.clone())),
+            //     desc: Set(app_g.description.clone()),
+            //     type_field: Set(BlockType::ActionGroup),
+            //     reference: Set(Some(app_g.clone().id)),
+            //     parent_id: Set(Some(uuid2.clone())),
+            //     case_id: Set(case_m.clone().id),
+            //     ..Default::default()
+            // }
+            //     .insert(db)
+            //     .await?,
         ];
         Ok(())
     }
