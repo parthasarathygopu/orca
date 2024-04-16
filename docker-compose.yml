@@ -21,7 +21,7 @@ services:
 
   chrome:
     platform: linux/amd64
-    image: selenium/node-chrome:nightly
+    image: selenium/node-chrome:latest
     shm_size: 2gb
     depends_on:
       - selenium-hub
@@ -34,7 +34,7 @@ services:
   firefox:
     container_name: firefox
     platform: linux/amd64
-    image: selenium/node-firefox:nightly
+    image: selenium/node-firefox:latest
     shm_size: 2gb
     depends_on:
       - selenium-hub
@@ -47,7 +47,7 @@ services:
 
   firefox_video:
     platform: linux/amd64
-    image: selenium/video:nightly
+    image: selenium/video:latest
     depends_on:
       - firefox
       - minio
@@ -92,7 +92,7 @@ services:
 
   selenium-hub:
     platform: linux/amd64
-    image: selenium/hub:nightly
+    image: selenium/hub:latest
     container_name: selenium-hub
     ports:
       - "4442:4442"

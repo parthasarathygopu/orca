@@ -489,9 +489,13 @@ impl MigrationTrait for Migration {
                             .primary_key().auto_increment(),
                     )
                     .col(
-                        ColumnDef::new(item_log::Column::RefId)
+                        ColumnDef::new(item_log::Column::ErId)
                             .integer()
                             .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(item_log::Column::RefId)
+                            .uuid(),
                     )
                     .col(
                         ColumnDef::new(item_log::Column::RefType)

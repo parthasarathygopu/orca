@@ -33,26 +33,27 @@ impl<'ccl> CaseController<'ccl> {
 
 
     /// execute - will execute the test cases based on the execution request
-    pub async fn execute(&self, id: Uuid, er: &ExecutionRequest, log: Option<&ItemLog>) -> EngineResult<()> {
+    pub async fn execute(&self, id: Uuid, er: &ExecutionRequest, log: Option<&ItemLog>,
+                         ref_id: Option<Uuid>) -> EngineResult<()> {
         let start = chrono::Utc::now();
         let log_id = log.map(|l| l.id);
-        let mut action_log = ActiveItemLog::new(er.id, ItemLogType::TestCase,
-                                                id, log_id).save(self.db).await?;
+        let mut case_log = ActiveItemLog::new(er.id, ref_id, ItemLogType::TestCase,
+                                              id, log_id).save(self.db).await?;
         let case = CaseEntity::find_by_id(id).one(self.db).await?
             .ok_or(EngineError::MissingParameter("Case".to_string(), id.into()))?;
-        let log = action_log.clone().try_into_model()?;
+        let log = case_log.clone().try_into_model()?;
         let result = self.process(&case, er, Some(&log)).await;
 
-        action_log.finished_at = Set(chrono::Utc::now().into());
-        action_log.execution_time = Set((chrono::Utc::now() - start).num_milliseconds() as i32);
+        case_log.finished_at = Set(chrono::Utc::now().into());
+        case_log.execution_time = Set((chrono::Utc::now() - start).num_milliseconds() as i32);
         match result {
             Ok(_) => {
-                action_log.status = Set(ItemLogStatus::Success);
-                action_log.save(self.db).await?;
+                case_log.status = Set(ItemLogStatus::Success);
+                case_log.save(self.db).await?;
             }
             Err(e) => {
-                action_log.status = Set(ItemLogStatus::Failed);
-                action_log.save(self.db).await?;
+                case_log.status = Set(ItemLogStatus::Failed);
+                case_log.save(self.db).await?;
                 return Err(e);
             }
         }
@@ -60,38 +61,19 @@ impl<'ccl> CaseController<'ccl> {
     }
 
 
-    pub async fn runner(&self, id: Uuid, is_dry_run: bool) -> EngineResult<()> {
+    pub async fn run(&self, id: Uuid, is_dry_run: bool) -> EngineResult<()> {
         let mut am_er = ActiveExecutionRequest::new(id, ExecutionType::TestCase,
                                                     ExecutionKind::Trigger,
                                                     ExecutionStatus::Started, 0,
                                                     is_dry_run, Some(format!("[TC] Executing - {id}")), ).save(self.db).await?;
         let model_er = am_er.clone().try_into_model()?;
         info!("[{er}] Trigger Test Case {case_id}", er=model_er.id, case_id = id);
-        self.execute(id, &model_er, None).await?;
+        self.execute(id, &model_er, None, Some(id)).await?;
         am_er.finished_at = Set(chrono::Utc::now().into());
         am_er.status = Set(ExecutionStatus::Completed);
         am_er.save(self.db).await?;
         Ok(())
     }
-
-
-    // /// run - will execute the test cases based on the execution request
-    // pub async fn run(&self, id: Uuid, er: &ExecutionRequest, log: Option<&ItemLog>) -> EngineResult<()> {
-    //     info!("[{er}] Trigger Test Case {action_id}", er=er.ref_id, action_id = id);
-    //     let start = chrono::Utc::now();
-    //     let log_id = log.map(|l| l.id);
-    //     let mut log_am = new(er.id, ItemLogType::TestCase, id, log_id).save(self.db).await?;
-    //     let case = Entity::find_by_id(id).one(self.db).await?
-    //         .ok_or(EngineError::MissingParameter("ActionGroup".to_string(), id.into()))?;
-    //     let log = log_am.clone().try_into_model()?;
-    //     self.process(&case, er, Some(&log)).await?;
-    //
-    //     log_am.execution_time = Set((chrono::Utc::now() - start).num_milliseconds() as i32);
-    //     log_am.status = Set(ItemLogStatus::Success);
-    //     log_am.finished_at = Set(chrono::Utc::now().into());
-    //     log_am.save(self.db).await?;
-    //     Ok(())
-    // }
 
     /// process will get the block and execute in the batch based on the kind of the block
     pub async fn process(&self, case: &case::Model, er: &ExecutionRequest, log: Option<&ItemLog>) -> EngineResult<()> {
@@ -101,7 +83,25 @@ impl<'ccl> CaseController<'ccl> {
             .paginate(self.db, 10);
         while let Some(blocks) = block_page.fetch_and_next().await? {
             for block in blocks.into_iter() {
-                self.switch_block(&block, er, log).await?;
+                let start = chrono::Utc::now();
+                let log_id = log.map(|l| l.id);
+                let mut item_log = ActiveItemLog::new(er.id, block.reference.clone(), ItemLogType::TestCaseBlock,
+                                                      block.id.clone(), log_id).save(self.db).await?;
+                let _log = item_log.clone().try_into_model()?;
+                let result = self.switch_block(&block, er, log).await;
+                item_log.execution_time = Set((chrono::Utc::now() - start).num_milliseconds() as i32);
+                item_log.finished_at = Set(chrono::Utc::now().into());
+                match result {
+                    Ok(_) => {
+                        item_log.status = Set(ItemLogStatus::Success);
+                        item_log.save(self.db).await?;
+                    }
+                    Err(e) => {
+                        item_log.status = Set(ItemLogStatus::Failed);
+                        item_log.save(self.db).await?;
+                        return Err(e);
+                    }
+                }
             }
         }
         Ok(())
@@ -152,7 +152,7 @@ impl<'ccl> CaseController<'ccl> {
         info!("Starting processing {block_id} ", block_id = block.id);
         let controller = ActionController::new(self.db, self.drive.clone(), self.cli.clone());
         let result = controller
-            .execute(block.reference.unwrap(), er, log)
+            .execute(block.reference.unwrap(), er, log, Some(block.id))
             .await?;
         Ok(result)
     }

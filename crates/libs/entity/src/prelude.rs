@@ -19,11 +19,15 @@ pub use super::{
                              Entity as DataBindingEntity,
                              Model as DataBinding},
         log::item_log::{ActiveModel as ActiveItemLog,
-                        Entity as ItemLogEntity,
-                        ItemLogStatus, ItemLogType, Model as ItemLog},
+                        Column as ItemLogColumn,
+                        Entity as ItemLogEntity, ItemLogStatus, ItemLogType, Model as ItemLog},
         request::{ActiveModel as ActiveExecutionRequest,
                   Entity as ExecutionRequestEntity,
                   ExecutionKind, ExecutionStatus, ExecutionType, Model as ExecutionRequest},
+        suit::suite_block::{ActiveModel as ActiveSuiteBlock,
+                            Column as SuiteBlockColumn,
+                            Entity as SuiteBlockEntity,
+                            Model as SuiteBlock, SuiteBlockType},
     },
 };
 pub use super::test::ui::{

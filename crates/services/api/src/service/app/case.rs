@@ -192,28 +192,10 @@ impl CaseService {
 
     /// run - this will run the single tes case
     pub async fn run(&self, case_id: Uuid) -> InternalResult<()> {
-        // let case = Entity::find_by_id(case_id).one(self.trx()).await?.ok_or_else(|| {
-        //     OrcaRepoError::ModelNotFound("Test Case".to_string(), case_id.to_string())
-        // })?;
-        // debug!("Running Case Id {:?}", case.id);
-        // let er_am = ActiveExecutionRequest::new(case_id,
-        //                                         ExecutionType::TestCase,
-        //                                         ExecutionKind::Trigger,
-        //                                         ExecutionStatus::Started,
-        //                                         0, false,
-        //                                         Some(format!("Executing - {case_name}", case_name = case.name)));
-        // let mut er_am = er_am.save(self.trx()).await?;
-        // let er = er_am.clone().try_into_model()?;
-        // debug!("Trigger the execution for the  {:?}", er_am);
         let ui_driver = WebDriver::default().await?;
         let controller = CaseController::new(self.trx(), ui_driver.clone(), self.1.clone());
-        controller.runner(case_id, true).await?;
+        controller.run(case_id, true).await?;
         ui_driver.quit().await?;
-
-        // er_am.status = Set(ExecutionStatus::Completed);
-        // er_am.finished_at = Set(chrono::Utc::now().into());
-        // er_am.updated_at = Set(chrono::Utc::now().into());
-        // er_am.save(self.trx()).await?;
 
         Ok(())
     }
