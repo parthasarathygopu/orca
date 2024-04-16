@@ -5,11 +5,12 @@ import {
   DocumentCheckIcon,
   FunnelIcon,
   RectangleGroupIcon,
-  TableCellsIcon
 } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 import { Outlet, useNavigate, useParams, useMatch } from "react-router-dom";
 import { routeStore } from "stores/route.store.js";
+
+import "./index.css";
 
 const menuItems = [
   {
@@ -113,7 +114,7 @@ export function AppLayout() {
           </ul>
         </div>
       </aside>
-      <div className="relative p-0 m-0 w-full sm:w-[calc(100%_-_15rem)] sm:left-60 overflow-auto">
+      <div className="relative p-0 m-0 w-full sm:w-[calc(100%_-_15rem)] sm:left-60 overflow-auto container">
         <Outlet />
       </div>
     </>

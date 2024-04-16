@@ -6,6 +6,8 @@ import { Button, Flex, IconButton, Tooltip } from "@radix-ui/themes";
 import { ColumnField } from "core/components/table";
 import { ReadOnlyTable } from "core/components/table/read";
 import { SearchableDropdown } from "core/components/dropdown/index.jsx";
+import { Spinner } from "core/components/spinner";
+import { ToastComponent } from "core/components/toast";
 import { fetchTestCases } from "service/app/test_case";
 import {
   deleteSuiteBlock,
@@ -22,6 +24,8 @@ export function TestSuitePage() {
   const [testSuiteDetails, setTestSuiteDetails] = useState([] as any);
   const [testCases, setTestCases] = useState([] as any);
   const [selectedTestCase, setSelectedTestCase] = useState({} as any);
+  const [isDryRunLoading, setIsDryRunLoading] = useState(false);
+  const [showToast, setShowToast] = useState({ title: "", status: "" });
 
   useEffect(() => {
     getTestSuiteDetails();
@@ -59,8 +63,18 @@ export function TestSuitePage() {
   }
 
   const handleRun = () => {
+    if(testCases.length === 0) {
+      setShowToast({ title: "No test case was configured ", status: "error" });
+      return null;
+    }
+    setIsDryRunLoading(true);
     dryRun(appId, testSuiteId).then(() => {
-        console.log("Dry run completed");
+        setIsDryRunLoading(false);
+        setShowToast({ title: "Dry Run was successfull", status: "success" });
+
+    }).catch((err) => {
+      setIsDryRunLoading(false);
+      setShowToast({ title: "Dry Run was failed", status: "error" });
     });
   };
 
@@ -118,6 +132,11 @@ export function TestSuitePage() {
 
   return (
     <>
+     {isDryRunLoading && (
+        <div className="loader">
+          <Spinner />
+        </div>
+      )}
       <PageHeader
         backIcon
         title={testSuiteDetails.name}
@@ -163,6 +182,11 @@ export function TestSuitePage() {
           onDragEnd={(data: any, newIndex: number) => reorderTestCase(data, newIndex)}
           isDragAllowed={true}
         />
+              {showToast.title && <ToastComponent
+        title={showToast.title}
+        onClose={() => setShowToast({ title: "", status: ""})}
+        status={showToast.status}
+      />}
       </div>
     </>
   );
