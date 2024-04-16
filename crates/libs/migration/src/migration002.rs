@@ -38,7 +38,7 @@ impl MigrationTrait for Migration {
             updated_by: Set(Some("system".to_string())),
             ..Default::default()
         };
-        let usr: Model = user_am.insert(db).await?;
+        let _usr: Model = user_am.insert(db).await?;
 
         /// create Seed User for Admin user
         let user_am = entity::admin::user::ActiveModel {

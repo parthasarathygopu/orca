@@ -79,13 +79,19 @@ impl<'ccl> ActionController<'ccl> {
     ///
     /// * `Result<(), EngineError>` - If the `data_value` field is `None`, it returns an `Err` with an `EngineError::Forbidden` variant. If the `data_value` field is not `None`, it opens the URL using the `drive` object and returns `Ok(())`.
     pub async fn command_open(&self, action: &action::Model) -> EngineResult<()> {
-        match action.data_value.clone() {
-            Some(value) => Ok(self.driver.open("https://www.wikipedia.org/").await?),
-            None => Err(EngineError::MissingParameter(
-                "url".to_string(),
-                "".to_string(),
-            )),
-        }
+        let url = action.data_value.clone().ok_or_else(|| {
+            EngineError::MissingParameter("url".to_string(), "".to_string())
+        })?;
+        info!("Opening URL: {}", url);
+        self.driver.open(url.as_str()).await?;
+        Ok(())
+        // match action.data_value.clone() {
+        //     Some(value) => Ok(self.driver.open(value.as_str()).await?),
+        //     None => Err(EngineError::MissingParameter(
+        //         "url".to_string(),
+        //         "".to_string(),
+        //     )),
+        // }
     }
 
     /// Asynchronously enters data into a target element on a web page using a WebDriver.
@@ -283,13 +289,13 @@ impl<'ccl> ActionController<'ccl> {
                 let result = self.execute_action(&action, er, &_log).await;
                 action_log.execution_time = Set((chrono::Utc::now() - start).num_milliseconds() as i32);
                 action_log.finished_at = Set(chrono::Utc::now().into());
-                error!("Error in action  {:?}",  result);
                 match result {
                     Ok(_) => {
                         action_log.status = Set(ItemLogStatus::Success);
                         action_log.save(self.db).await?;
                     }
                     Err(e) => {
+                        error!("Error in Action: {:?}", e);
                         action_log.status = Set(ItemLogStatus::Failed);
                         action_log.save(self.db).await?;
                         return Err(e);

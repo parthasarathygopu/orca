@@ -37,6 +37,7 @@ impl WebDriver {
 
     pub async fn default() -> CeriumResult<Self> {
         let mut caps = DesiredCapabilities::firefox();
+        caps.set_headless()?;
         caps.add("se:recordVideo", true)?;
         let driver = TFWebDriver::new("http://localhost:4444/wd/hub/session", caps).await?;
         Self::new(driver)
