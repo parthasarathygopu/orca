@@ -2,9 +2,17 @@ import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import { Badge, Link, Text } from "@radix-ui/themes";
 import { ColumnField, ReadOnlyTable } from "core/components/table";
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Service } from "service";
 import { Endpoint } from "service/endpoint";
+
+const REF_TYPE_MAPPING: any = {
+  TC: "TestCase",
+  TS: "TestSuite",
+  TestCase: "TestCase",
+  ActionGroup: "ActionGroup",
+  Action: "Action"
+}
 
 const TYPE_MAPPING: any = {
   TestCase: (
@@ -21,36 +29,52 @@ const TYPE_MAPPING: any = {
 
 export const ExecutionHistory: React.FC = () => {
   const navigate = useNavigate();
+  const { appId = "" } = useParams();
+  const location = useLocation();
+  const pathDict = location.pathname.split("/");
+  const historyId = pathDict[4];
   /**
    * onHandleClick - Handle the Test case redirect
    * @param record
    */
   const onHandleClick = (record: any) => {
-    navigate(`${record.id}`);
+    if(record.ref_type === "Action") {
+      return null;
+    } else {
+      navigate(`/app/${appId}/history/${historyId || record.id}/log/${REF_TYPE_MAPPING[record.ref_type]}/${record.step_id || record.ref_id}`); // Redirect to the Test case page
+    }
   };
+
   const columns: Array<ColumnField> = [
     {
       key: "id",
       label: "Execution No",
       className: "flex-auto ",
       render: (text, record) => (
-        <Link size="2" onClick={() => onHandleClick(record)}>
+        <div>
           {text}
-        </Link>
+        </div>
       )
     },
     {
       key: "description",
       label: "Description",
       className: "flex-auto ",
-      render: (text, record) => (
-        <Link
+      render: (text, record) => {
+        if(record.ref_type !== "Action") {
+        return <Link
           size="2"
           onClick={() => onHandleClick(record)} //
         >
-          {text} ({record["reference"]})
+          {text} Description
         </Link>
-      )
+        }
+        else{
+            return <div>
+               {text} Description
+            </div>
+        }
+    }
     },
     {
       key: "type",
@@ -97,20 +121,23 @@ export const ExecutionHistory: React.FC = () => {
       )
     }
   ];
-
-  const { appId = "" } = useParams();
   const [dataSource, setDataSource] = useState([] as any);
   const fetchActions = async () => {
-    await Service.get(`${Endpoint.v1.history.list(appId)}`)
+    let url = `${Endpoint.v1.history.list(appId)}`
+    if(historyId) {
+        url = `${Endpoint.v1.history.list(appId)}/${historyId}/log/${pathDict[6]}/${pathDict[7]}/blocks`
+    }
+    await Service.get(url)
       .then((history) => {
         setDataSource(history);
       })
-      .finally(() => {});
+      .finally(() => { });
   };
 
   useEffect(() => {
     fetchActions();
-  }, []);
+  }, [location.pathname]);
+
   return (
     <>
       <div className="relative mx-4 mt-4 overflow-hidden text-gray-700 bg-white rounded-none bg-clip-border">

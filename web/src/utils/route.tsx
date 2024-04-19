@@ -138,7 +138,7 @@ export const ROUTES = [
           //   }
           // },
           {
-            path: ":appId/history",
+            path: ":appId/history/*",
             component: () => {
               const { History } = lazily(() => import("pages/app/history"));
               return History;
